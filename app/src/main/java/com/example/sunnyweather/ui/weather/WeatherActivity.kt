@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.sunnyweather.R
 import com.example.sunnyweather.logic.model.Weather
 import com.example.sunnyweather.logic.model.getSky
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_weather.*
 import kotlinx.android.synthetic.main.forecast.*
 import kotlinx.android.synthetic.main.life_index.*
@@ -28,9 +29,11 @@ class WeatherActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // 页面优化 融合状态栏
         val decorView = window.decorView
+
         decorView.systemUiVisibility =
             View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         window.statusBarColor = Color.TRANSPARENT
+
         setContentView(R.layout.activity_weather)
 
         if(viewModel.locationLng.isEmpty()){
@@ -40,7 +43,7 @@ class WeatherActivity : AppCompatActivity() {
             viewModel.locationLat = intent.getStringExtra("location_lat") ?: ""
         }
         if(viewModel.placeName.isEmpty()){
-            viewModel.placeName = intent.getStringExtra("place_ame") ?: ""
+            viewModel.placeName = intent.getStringExtra("place_name") ?: ""
         }
         viewModel.weatherLiveData.observe(this, Observer { result ->
             val weather = result.getOrNull()
@@ -50,10 +53,22 @@ class WeatherActivity : AppCompatActivity() {
                 Toast.makeText(this, "无法获取天气信息", Toast.LENGTH_SHORT).show()
                 result.exceptionOrNull()?.printStackTrace()
             }
+            swipeRefresh.isRefreshing = false
         })
+
+        swipeRefresh.setColorSchemeResources(R.color.colorPrimary)
+        refreshWeather()
+        swipeRefresh.setOnRefreshListener {
+            refreshWeather()
+        }
+
         viewModel.refreshWeather(viewModel.locationLng, viewModel.locationLat)
     }
 
+    fun refreshWeather(){
+        viewModel.refreshWeather(viewModel.locationLng, viewModel.locationLat)
+        swipeRefresh.isRefreshing = true
+    }
     private fun showWeatherInfo(weather: Weather){
         placeName.text = viewModel.placeName
         val realtime = weather.realtime
