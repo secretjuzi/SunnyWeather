@@ -1,5 +1,6 @@
 package com.example.sunnyweather.ui.place
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -12,6 +13,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.sunnyweather.R
+import com.example.sunnyweather.ui.weather.WeatherActivity
 import kotlinx.android.synthetic.main.fragment_place.*
 
 class PlaceFragment: Fragment() {
@@ -31,11 +33,34 @@ class PlaceFragment: Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
+        if (viewModel.isPlaceSaved()){
+            val place = viewModel.getSavedPlace()
+            val intent = Intent(context, WeatherActivity::class.java).apply {
+                putExtra("location_lng",place.location.lng)
+                putExtra("location_lat",place.location.lat)
+                putExtra("place_name",place.name)
+            }
+            startActivity(intent)
+            activity?.finish()
+            return
+        }
+
         val layoutManager = LinearLayoutManager(activity)
         recyclerView.layoutManager = layoutManager
         adapter = PlaceAdapter(this, viewModel.placeList)
         recyclerView.adapter = adapter
 
+//        searchPlaceEdit.addTextChangedListener{ editable ->
+//            val content = editable.toString()
+//            if (content.isNotEmpty()){
+//                viewModel.searchPlaces(content)
+//            }else{
+//                recyclerView.visibility = View.GONE
+//                bgImageView.visibility = View.VISIBLE
+//                viewModel.placeList.clear()
+//                adapter.notifyDataSetChanged()
+//            }
+//        }
         searchPlaceEdit.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
@@ -52,11 +77,9 @@ class PlaceFragment: Fragment() {
             }
 
             override fun afterTextChanged(s: Editable?) {}
-        }
+        })
 
-        )
-
-        viewModel.placeLiveData.observe(this, Observer { result ->
+        viewModel.placeLiveData.observe(viewLifecycleOwner, Observer { result ->
             val places = result.getOrNull()
             if (places != null){
                 recyclerView.visibility = View.VISIBLE
